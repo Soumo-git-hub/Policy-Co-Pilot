@@ -111,8 +111,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 function Dropdown() {
+    const router = useRouter();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -144,7 +147,10 @@ function Dropdown() {
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600 cursor-pointer flex items-center gap-2">
+                <DropdownMenuItem
+                    className="text-red-600 cursor-pointer flex items-center gap-2"
+                    onClick={() => router.push("/")}
+                >
                     <LogOut className="w-4 h-4" />
                     <span>Log out</span>
                 </DropdownMenuItem>

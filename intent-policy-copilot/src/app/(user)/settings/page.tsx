@@ -1,12 +1,13 @@
 "use client";
 
-import { User, Bell, Shield, Key, Moon, Sun, Monitor, Laptop, Smartphone, Mail, Globe, Save } from "lucide-react";
+import { User, Bell, Shield, Key, Moon, Sun, Monitor, Laptop, Smartphone, Mail, Globe, Save, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast-system";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 const tabs = [
     { id: "profile", label: "Profile & Account", icon: User },
@@ -20,6 +21,7 @@ export default function SettingsPage() {
     const { addToast } = useToast();
     const { setTheme, theme } = useTheme();
     const [isSaving, setIsSaving] = useState(false);
+    const router = useRouter();
 
     // Context State
     const { userProfile, updateUserProfile } = useWorkspace();
@@ -50,6 +52,12 @@ export default function SettingsPage() {
         }, 800);
     };
 
+    const handleLogout = () => {
+        // Clear session specific stuff if any, or just redirect
+        // For this demo, we'll just redirect to landing
+        router.push("/");
+    };
+
     return (
         <div className="flex-1 overflow-hidden bg-[#f8fafc] dark:bg-[#0b1121] flex flex-col">
             <div className="flex-1 flex overflow-hidden">
@@ -59,22 +67,34 @@ export default function SettingsPage() {
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Settings</h1>
                         <p className="text-xs text-slate-500 dark:text-slate-400">Manage your workspace preferences.</p>
                     </div>
-                    <nav className="px-3 space-y-1">
-                        {tabs.map((tab) => (
+                    <nav className="px-3 py-4 flex flex-col justify-between min-h-[400px]">
+                        <div className="space-y-1">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                                        activeTab === tab.id
+                                            ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                                    )}
+                                >
+                                    <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-blue-600 dark:text-blue-400" : "text-slate-400")} />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="pt-4 mt-8 border-t border-slate-100 dark:border-slate-800">
                             <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                                    activeTab === tab.id
-                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                                )}
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200"
                             >
-                                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-blue-600 dark:text-blue-400" : "text-slate-400")} />
-                                {tab.label}
+                                <LogOut className="w-4 h-4" />
+                                Log Out
                             </button>
-                        ))}
+                        </div>
                     </nav>
                 </aside>
 

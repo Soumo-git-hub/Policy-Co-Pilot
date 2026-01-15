@@ -25,14 +25,26 @@ const barDataMap: Record<string, any[]> = {
     'id': [{ name: 'Jakarta', value: 410 }, { name: 'Surabaya', value: 290 }, { name: 'Bali', value: 150 }],
 };
 
-export function ImpactChart() {
+import { memo, useState, useEffect } from "react";
+
+export const ImpactChart = memo(function ImpactChart() {
     const { currentWorkspace } = useWorkspace();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        // Add a micro-delay to ensure parent layout is calculated
+        const timer = setTimeout(() => setMounted(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
     const color = currentWorkspace.id === 'vn' ? '#2563eb' : currentWorkspace.id === 'in' ? '#ea580c' : '#dc2626';
     const data = dataMap[currentWorkspace.id] || dataMap['in'];
 
+    if (!mounted) return <div className="h-[250px] w-full mt-4" />;
+
     return (
-        <div className="h-[250px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[250px] w-full mt-4 will-change-transform overflow-hidden">
+            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
                 <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                     <defs>
                         <linearGradient id="colorImpact" x1="0" y1="0" x2="0" y2="1">
@@ -70,16 +82,25 @@ export function ImpactChart() {
             </ResponsiveContainer>
         </div>
     );
-}
+});
 
-export function EfficiencyChart() {
+export const EfficiencyChart = memo(function EfficiencyChart() {
     const { currentWorkspace } = useWorkspace();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setMounted(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
     const barData = barDataMap[currentWorkspace.id] || barDataMap['in'];
     const color = currentWorkspace.id === 'vn' ? '#3b82f6' : currentWorkspace.id === 'in' ? '#ea580c' : '#ef4444';
 
+    if (!mounted) return <div className="h-[200px] w-full mt-4" />;
+
     return (
-        <div className="h-[200px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="h-[200px] w-full mt-4 will-change-transform overflow-hidden">
+            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
                 <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
@@ -93,4 +114,4 @@ export function EfficiencyChart() {
             </ResponsiveContainer>
         </div>
     )
-}
+});

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { memo } from "react";
 import {
     LayoutGrid,
     Shield,
@@ -29,11 +31,41 @@ const secondaryNav = [
     { icon: FileCode, label: "API Configuration", href: "/admin/api" },
 ];
 
+const NavItem = memo(({ icon: Icon, label, href, isActive, activeColor }: { icon: any, label: string, href: string, isActive: boolean, activeColor: string }) => (
+    <Link
+        href={href}
+        className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
+            isActive
+                ? `${activeColor}/5 text-purple-600 shadow-sm`
+                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        )}
+    >
+        {isActive && (
+            <motion.div
+                layoutId="admin-sidebar-active"
+                className={cn("absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full", activeColor.replace('bg-', 'bg-').split('/')[0])}
+                style={{ backgroundColor: 'rgb(147, 51, 234)' }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            />
+        )}
+        <Icon
+            className={cn(
+                "w-4 h-4 transition-colors z-10",
+                isActive ? "text-purple-600" : "text-muted-foreground group-hover:text-foreground"
+            )}
+        />
+        <span className="z-10">{label}</span>
+    </Link>
+));
+
+NavItem.displayName = "NavItem";
+
 export function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="w-[280px] bg-sidebar border-r border-sidebar-border flex flex-col h-screen transition-all duration-300 z-50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+        <aside className="w-[280px] bg-sidebar border-r border-sidebar-border flex flex-col h-screen z-50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]" style={{ contain: 'layout paint' }}>
             {/* Brand */}
             <div className="p-6 pb-4">
                 <div className="flex items-center gap-3 px-2">
@@ -52,44 +84,26 @@ export function AdminSidebar() {
                 {/* Main Section */}
                 <div className="space-y-1">
                     <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Administration</div>
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-                                    isActive
-                                        ? "bg-purple-600/5 text-purple-600 shadow-sm ring-1 ring-purple-600/10"
-                                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                                )}
-                            >
-                                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-purple-600 rounded-r-full" />}
-                                <item.icon
-                                    className={cn(
-                                        "w-4 h-4 transition-colors",
-                                        isActive ? "text-purple-600" : "text-muted-foreground group-hover:text-foreground"
-                                    )}
-                                />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
+                    {navItems.map((item) => (
+                        <NavItem
+                            key={item.href}
+                            {...item}
+                            isActive={pathname === item.href}
+                            activeColor="bg-purple-600"
+                        />
+                    ))}
                 </div>
 
                 {/* Secondary Section */}
                 <div className="space-y-1">
                     <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Configuration</div>
                     {secondaryNav.map((item) => (
-                        <Link
+                        <NavItem
                             key={item.href}
-                            href={item.href}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 group"
-                        >
-                            <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                            <span>{item.label}</span>
-                        </Link>
+                            {...item}
+                            isActive={pathname === item.href}
+                            activeColor="bg-purple-600"
+                        />
                     ))}
                 </div>
             </div>
@@ -113,8 +127,15 @@ import {
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { useState, useEffect } from "react";
+
 function Dropdown() {
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <DropdownMenu>
@@ -137,24 +158,26 @@ function Dropdown() {
                     <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mb-2" align="start" side="top">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>Switch to Analyst View</span>
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                    className="text-red-600 cursor-pointer flex items-center gap-2"
-                    onClick={() => router.push("/")}
-                >
-                    <LogOut className="w-4 h-4" />
-                    <span>Log out</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
+            {mounted && (
+                <DropdownMenuContent className="w-56 mb-2" align="start" side="top">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard" className="cursor-pointer flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            <span>Switch to Analyst View</span>
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        className="text-red-600 cursor-pointer flex items-center gap-2"
+                        onClick={() => router.push("/")}
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Log out</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            )}
         </DropdownMenu>
     )
 }

@@ -1,14 +1,101 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { Send, User, Sparkles, StopCircle, Paperclip, Zap, ShieldCheck, Globe, FileText, ChevronRight, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Citation } from "@/types";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { motion } from "framer-motion";
 
 interface InquiryEngineProps {
     onCitationClick: (citation: Citation) => void;
 }
+
+// Extracted Message Component for High-Performance Rendering
+const Message = memo(({ msg, idx, userProfile, currentWorkspace, onCitationClick, handleSuggestionClick }: any) => {
+    return (
+        <div
+            key={idx}
+            className={cn(
+                "flex w-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both",
+                msg.role === "user" ? "justify-end" : "justify-start"
+            )}
+        >
+            <div className={cn("max-w-[85%] flex gap-5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                <div
+                    className={cn(
+                        "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-md border self-end mb-1",
+                        msg.role === "user"
+                            ? "bg-slate-900 border-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                            : "bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-primary shadow-blue-500/5"
+                    )}
+                >
+                    {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                </div>
+
+                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className="px-1 flex items-center gap-2">
+                        <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-tighter">
+                            {msg.role === "user" ? `${userProfile.firstName} ${userProfile.lastName}` : `${currentWorkspace.id.toUpperCase()} POLICY BOT`}
+                        </span>
+                    </div>
+
+                    <div className={cn(
+                        "relative group px-6 py-4 rounded-3xl text-[14.5px] leading-[1.6] shadow-sm border transition-all",
+                        msg.role === "user"
+                            ? "bg-slate-900 text-white border-slate-800 rounded-tr-sm dark:bg-slate-100 dark:text-slate-900"
+                            : "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm text-slate-800 dark:text-slate-200 border-slate-100 dark:border-slate-800 rounded-tl-sm hover:border-primary/20"
+                    )}>
+                        <div className="whitespace-pre-wrap">
+                            {msg.content.split('\n').map((line: any, i: number) => (
+                                <p key={i} className="mb-2 last:mb-0">
+                                    {line.split(/(\*\*.*?\*\*)/).map((part: string, j: number) =>
+                                        part.startsWith('**') && part.endsWith('**') ? (
+                                            <strong key={j} className={cn("font-bold", msg.role === 'user' ? "text-blue-300 dark:text-blue-600" : "text-primary")}>
+                                                {part.slice(2, -2)}
+                                            </strong>
+                                        ) : part
+                                    )}
+                                </p>
+                            ))}
+                        </div>
+
+                        {msg.citations && (
+                            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                                {msg.citations.map((cit: Citation) => (
+                                    <button
+                                        key={cit.id}
+                                        onClick={() => onCitationClick(cit)}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 group/cit"
+                                    >
+                                        <FileText className="w-3.5 h-3.5 text-primary/60 group-hover/cit:scale-110 transition-transform" />
+                                        Source: {cit.documentName} • p.{cit.page}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {msg.suggestions && (
+                        <div className="flex flex-wrap gap-2 mt-2 px-1 animate-in fade-in slide-in-from-left-2 duration-700 delay-300">
+                            {msg.suggestions.map((suggest: string) => (
+                                <button
+                                    key={suggest}
+                                    onClick={() => handleSuggestionClick(suggest)}
+                                    className="px-4 py-1.5 bg-white dark:bg-slate-900 border border-border/80 hover:border-primary hover:text-primary transition-all rounded-full text-[11px] font-bold text-muted-foreground shadow-sm active:scale-95"
+                                >
+                                    {suggest}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+});
+
+Message.displayName = "Message";
 
 // Extensive Predefined Flows
 const flows: Record<string, any> = {
@@ -62,6 +149,21 @@ const flows: Record<string, any> = {
     }
 };
 
+const container = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const itemAnim = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+};
+
 export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
     const { currentWorkspace, userProfile } = useWorkspace();
     const [input, setInput] = useState("");
@@ -92,13 +194,12 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
     }
 
     useEffect(() => {
-        // Only scroll to bottom if we have more than the initial greeting
         if (messages.length > 1 || isTyping) {
             scrollToBottom();
         }
     }, [messages, isTyping]);
 
-    const handleSuggestionClick = (suggestion: string) => {
+    const handleSuggestionClick = useCallback((suggestion: string) => {
         let flowKey = "";
         const s = suggestion.toLowerCase();
 
@@ -127,10 +228,10 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                 suggestions: flow.suggestions
             };
             setMessages(prev => [...prev, aiMsg]);
-        }, 1200);
-    };
+        }, 800);
+    }, [currentWorkspace.id]);
 
-    const handleSend = () => {
+    const handleSend = useCallback(() => {
         if (!input.trim()) return;
 
         let flowKey = "payment";
@@ -155,13 +256,13 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                 suggestions: flow.suggestions
             };
             setMessages(prev => [...prev, aiMsg]);
-        }, 1200);
-    };
+        }, 800);
+    }, [input]);
 
     return (
         <div className="flex flex-col h-full relative bg-background">
             {/* Premium Glass Header */}
-            <div className="h-20 flex items-center justify-between px-8 border-b border-border/50 bg-background/80 backdrop-blur-xl z-20 shrink-0 sticky top-0">
+            <div className="h-20 flex items-center justify-between pl-8 pr-24 border-b border-border/50 bg-background/80 backdrop-blur-xl z-20 shrink-0 sticky top-0">
                 <div className="flex items-center gap-4">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 bg-primary/10")}>
                         <span className="text-xl">{currentWorkspace.flag}</span>
@@ -187,88 +288,18 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
             </div>
 
             {/* Main Chat Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
+            <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth" style={{ contentVisibility: 'auto', contain: 'layout paint' } as any}>
                 <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
                     {messages.map((msg, idx) => (
-                        <div
+                        <Message
                             key={idx}
-                            className={cn(
-                                "flex w-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both",
-                                msg.role === "user" ? "justify-end" : "justify-start"
-                            )}
-                        >
-                            <div className={cn("max-w-[85%] flex gap-5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                                {/* Identity Indicator */}
-                                <div
-                                    className={cn(
-                                        "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-md border self-end mb-1",
-                                        msg.role === "user"
-                                            ? "bg-slate-900 border-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
-                                            : "bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-primary shadow-blue-500/5"
-                                    )}
-                                >
-                                    {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                </div>
-
-                                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                    <div className="px-1 flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-tighter">
-                                            {msg.role === "user" ? `${userProfile.firstName} ${userProfile.lastName}` : `${currentWorkspace.id.toUpperCase()} POLICY BOT`}
-                                        </span>
-                                    </div>
-
-                                    <div className={cn(
-                                        "relative group px-6 py-4 rounded-3xl text-[14.5px] leading-[1.6] shadow-sm border transition-all",
-                                        msg.role === "user"
-                                            ? "bg-slate-900 text-white border-slate-800 rounded-tr-sm dark:bg-slate-100 dark:text-slate-900"
-                                            : "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm text-slate-800 dark:text-slate-200 border-slate-100 dark:border-slate-800 rounded-tl-sm hover:border-primary/20"
-                                    )}>
-                                        <div className="whitespace-pre-wrap">
-                                            {msg.content.split('\n').map((line: string, i: number) => (
-                                                <p key={i} className="mb-2 last:mb-0">
-                                                    {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
-                                                        part.startsWith('**') && part.endsWith('**') ? (
-                                                            <strong key={j} className={cn("font-bold", msg.role === 'user' ? "text-blue-300 dark:text-blue-600" : "text-primary")}>
-                                                                {part.slice(2, -2)}
-                                                            </strong>
-                                                        ) : part
-                                                    )}
-                                                </p>
-                                            ))}
-                                        </div>
-
-                                        {msg.citations && (
-                                            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
-                                                {msg.citations.map((cit: Citation) => (
-                                                    <button
-                                                        key={cit.id}
-                                                        onClick={() => onCitationClick(cit)}
-                                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 group/cit"
-                                                    >
-                                                        <FileText className="w-3.5 h-3.5 text-primary/60 group-hover/cit:scale-110 transition-transform" />
-                                                        Source: {cit.documentName} • p.{cit.page}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {msg.suggestions && (
-                                        <div className="flex flex-wrap gap-2 mt-2 px-1 animate-in fade-in slide-in-from-left-2 duration-700 delay-300">
-                                            {msg.suggestions.map((suggest: string) => (
-                                                <button
-                                                    key={suggest}
-                                                    onClick={() => handleSuggestionClick(suggest)}
-                                                    className="px-4 py-1.5 bg-white dark:bg-slate-900 border border-border/80 hover:border-primary hover:text-primary transition-all rounded-full text-[11px] font-bold text-muted-foreground shadow-sm active:scale-95"
-                                                >
-                                                    {suggest}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                            msg={msg}
+                            idx={idx}
+                            userProfile={userProfile}
+                            currentWorkspace={currentWorkspace}
+                            onCitationClick={onCitationClick}
+                            handleSuggestionClick={handleSuggestionClick}
+                        />
                     ))}
 
                     {isTyping && (
@@ -289,7 +320,12 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
 
                     {/* Empty State Hero */}
                     {messages.length === 1 && !isTyping && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+                        <motion.div
+                            variants={container}
+                            initial="hidden"
+                            animate="show"
+                            className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6"
+                        >
                             {[
                                 {
                                     label: `Analyze ${currentWorkspace.name.split(' ')[0]}`,
@@ -310,7 +346,8 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                                     desc: "Compare local policy against international EV roadmap standards."
                                 }
                             ].map((card, i) => (
-                                <button
+                                <motion.button
+                                    variants={itemAnim}
                                     key={i}
                                     onClick={() => handleSuggestionClick(card.label.includes('Analyze') ? `${card.label} Guidelines` : card.label)}
                                     className="group p-6 bg-white dark:bg-slate-900 border border-border hover:border-primary/40 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 text-left relative overflow-hidden active:scale-95"
@@ -326,9 +363,9 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                                     </div>
                                     <h3 className="font-bold text-foreground text-base mb-2 group-hover:text-primary transition-colors">{card.label}</h3>
                                     <p className="text-xs text-muted-foreground leading-relaxed font-medium">{card.desc}</p>
-                                </button>
+                                </motion.button>
                             ))}
-                        </div>
+                        </motion.div>
                     )}
                 </div>
                 <div ref={messagesEndRef} className="h-4" />

@@ -4,7 +4,15 @@ import { PlusCircle, Upload, ArrowRight, Shield, FileText, Zap, Activity, Trendi
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/context/WorkspaceContext";
-import { ImpactChart, EfficiencyChart } from "@/components/dashboard/Charts";
+import dynamic from "next/dynamic";
+const ImpactChart = dynamic(() => import("@/components/dashboard/Charts").then(mod => mod.ImpactChart), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-slate-50 animate-pulse rounded-xl" />
+});
+const EfficiencyChart = dynamic(() => import("@/components/dashboard/Charts").then(mod => mod.EfficiencyChart), {
+  ssr: false,
+  loading: () => <div className="h-[100px] w-full bg-slate-50 animate-pulse rounded-xl" />
+});
 
 // Mock Data Sets
 const inquiries: Record<string, any[]> = {
@@ -31,16 +39,37 @@ const dataMap: Record<string, any> = {
   'id': { tagline: "Grounded in Indonesia's eBus Experience" },
 }
 
+import { motion } from "framer-motion";
+
 export default function Home() {
   const { currentWorkspace } = useWorkspace();
   const currentInquiries = inquiries[currentWorkspace.id] || inquiries['in'];
   const tagline = dataMap[currentWorkspace.id]?.tagline || "Grounded in India's eBus Experience";
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemAnim = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto px-8 pb-12 pt-6 space-y-8 custom-scrollbar bg-[#f8fafc]"> {/* Removed motion wrapper here to avoid conflicts if AnimatePresence is not at root, but standard is fine. Actually, let's just make the text dynamic first as requested. */}
 
       {/* Top Header - Minimalist */}
-      <div className="flex items-center justify-between mb-2">
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center justify-between mb-2"
+      >
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Executive Overview</h1>
           <p className="text-slate-500 text-sm mt-1">Real-time governance insights for {currentWorkspace.name}</p>
@@ -50,15 +79,16 @@ export default function Home() {
             <Clock className="w-4 h-4" />
             Last 24 Hours
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed">
-            <ArrowUpRight className="w-4 h-4" />
-            Export Report (Coming Soon)
-          </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Hero / Quick Action - Refined "Sleek" Look */}
-      <section className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-0 group">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-0 group"
+      >
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
           <Zap className="w-64 h-64 rotate-12" />
         </div>
@@ -92,13 +122,18 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Analytics Grid - "Relevant Metrics" */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Main Chart Card */}
-        <div className="md:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="md:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-semibold text-slate-900">Program Readiness Index</h3>
@@ -110,10 +145,15 @@ export default function Home() {
             </span>
           </div>
           <ImpactChart />
-        </div>
+        </motion.div>
 
         {/* Side Metrics Column */}
-        <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="space-y-6"
+        >
 
           {/* Metric 1 */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -125,7 +165,7 @@ export default function Home() {
             {/* Mini bar chart placeholder for Efficiency */}
             <EfficiencyChart />
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Detailed Data Section */}
@@ -137,9 +177,18 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        >
           {currentInquiries.map((item, i) => (
-            <div key={i} className="group bg-white rounded-xl p-5 border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-slate-300 transition-all cursor-pointer">
+            <motion.div
+              variants={itemAnim}
+              key={i}
+              className="group bg-white rounded-xl p-5 border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-slate-300 transition-all cursor-pointer"
+            >
               <div className="flex justify-between items-start mb-4">
                 <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
                   item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' :
@@ -165,9 +214,9 @@ export default function Home() {
                 </div>
                 <span className="text-xs text-slate-400 font-medium">{item.time}</span>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
     </div>

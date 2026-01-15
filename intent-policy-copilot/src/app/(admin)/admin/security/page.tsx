@@ -134,19 +134,38 @@ export default function AdminSecurityPage() {
                         disabled={isScanning}
                         className={cn(
                             "flex items-center gap-2 px-6 py-3 rounded-xl shadow-lg transition-all text-sm font-bold tracking-wide border border-white/10 relative overflow-hidden group",
-                            isScanning ? "bg-slate-800 text-slate-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white hover:shadow-purple-500/25"
+                            isScanning
+                                ? "bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
+                                : "bg-purple-600 hover:bg-purple-700 text-white hover:shadow-purple-500/40 shadow-purple-500/20"
                         )}
                     >
                         {isScanning ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Audit in Progress...
-                            </>
+                            <div className="flex items-center gap-3">
+                                <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                                <span className="animate-pulse">Analyzing Systems...</span>
+                            </div>
                         ) : (
                             <>
-                                <Shield className="w-4 h-4" />
-                                Run Security Audit
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                                <div className="relative z-10 flex items-center gap-2 font-black">
+                                    <Shield className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                                    Run Security Audit
+                                </div>
+
+                                {/* High-tech scanning effect */}
+                                <motion.div
+                                    className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+                                    animate={{
+                                        translateX: ["100%", "-100%"]
+                                    }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "linear"
+                                    }}
+                                />
+
+                                {/* Pulse glow */}
+                                <div className="absolute inset-0 bg-purple-400/20 group-hover:animate-pulse pointer-events-none" />
                             </>
                         )}
                     </motion.button>

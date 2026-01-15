@@ -82,12 +82,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('last_active_workspace', currentWorkspace.id);
     }, [currentWorkspace.id]);
 
-    const switchWorkspace = (id: string) => {
+    const switchWorkspace = React.useCallback((id: string) => {
         const ws = availableWorkspaces.find((w) => w.id === id);
         if (ws) setCurrentWorkspace(ws);
-    };
+    }, [availableWorkspaces]);
 
-    const addWorkspace = (ws: Omit<Workspace, 'color'>) => {
+    const addWorkspace = React.useCallback((ws: Omit<Workspace, 'color'>) => {
         const colors = ["bg-blue-600", "bg-orange-500", "bg-red-600", "bg-emerald-600", "bg-purple-600", "bg-amber-600"];
         const newWs = {
             ...ws,
@@ -96,25 +96,27 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         const updated = [...availableWorkspaces, newWs];
         setAvailableWorkspaces(updated);
         localStorage.setItem('available_workspaces', JSON.stringify(updated));
-    };
+    }, [availableWorkspaces]);
 
-    const updateUserProfile = (newProfile: Partial<UserProfile>) => {
+    const updateUserProfile = React.useCallback((newProfile: Partial<UserProfile>) => {
         setUserProfile((prev) => {
             const updated = { ...prev, ...newProfile };
             localStorage.setItem(`user_profile_${currentWorkspace.id}`, JSON.stringify(updated));
             return updated;
         });
-    };
+    }, [currentWorkspace.id]);
+
+    const contextValue = React.useMemo(() => ({
+        currentWorkspace,
+        availableWorkspaces,
+        switchWorkspace,
+        addWorkspace,
+        userProfile,
+        updateUserProfile
+    }), [currentWorkspace, availableWorkspaces, switchWorkspace, addWorkspace, userProfile, updateUserProfile]);
 
     return (
-        <WorkspaceContext.Provider value={{
-            currentWorkspace,
-            availableWorkspaces,
-            switchWorkspace,
-            addWorkspace,
-            userProfile,
-            updateUserProfile
-        }}>
+        <WorkspaceContext.Provider value={contextValue}>
             {children}
         </WorkspaceContext.Provider>
     );

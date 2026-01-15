@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { memo } from "react";
 import {
     LayoutGrid,
     Home,
@@ -15,6 +17,8 @@ import {
     User
 } from "lucide-react";
 
+import { useWorkspace } from "@/context/WorkspaceContext";
+
 // Updated routing to match requested structure
 const navItems = [
     { icon: Home, label: "Governance Dashboard", href: "/dashboard" },
@@ -24,18 +28,41 @@ const navItems = [
     { icon: PieChart, label: "Analytics", href: "/analytics" },
 ];
 
-const secondaryNav = [
-    { icon: Settings, label: "Settings", href: "/settings" },
-];
+const NavItem = memo(({ icon: Icon, label, href, isActive }: { icon: any, label: string, href: string, isActive: boolean }) => (
+    <Link
+        href={href}
+        className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
+            isActive
+                ? "bg-primary/5 text-primary shadow-sm"
+                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        )}
+    >
+        {isActive && (
+            <motion.div
+                layoutId="sidebar-active"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+            />
+        )}
+        <Icon
+            className={cn(
+                "w-4 h-4 transition-colors z-10",
+                isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+            )}
+        />
+        <span className="z-10">{label}</span>
+    </Link>
+));
 
-import { useWorkspace } from "@/context/WorkspaceContext";
+NavItem.displayName = "NavItem";
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { currentWorkspace, userProfile } = useWorkspace();
+    const { userProfile } = useWorkspace();
 
     return (
-        <aside className="w-[280px] bg-sidebar border-r border-sidebar-border flex flex-col h-screen transition-all duration-300 z-50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+        <aside className="w-[280px] bg-sidebar border-r border-sidebar-border flex flex-col h-screen z-50 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]" style={{ contain: 'layout paint' }}>
             {/* Brand */}
             <div className="p-6 pb-4">
                 <div className="flex items-center gap-3 px-2">
@@ -54,39 +81,19 @@ export function Sidebar() {
                 {/* Main Section */}
                 <div className="space-y-1">
                     <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Main</div>
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-                                    isActive
-                                        ? "bg-primary/5 text-primary shadow-sm ring-1 ring-primary/10"
-                                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                                )}
-                            >
-                                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />}
-                                <item.icon
-                                    className={cn(
-                                        "w-4 h-4 transition-colors",
-                                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                                    )}
-                                />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
+                    {navItems.map((item) => (
+                        <NavItem
+                            key={item.href}
+                            {...item}
+                            isActive={pathname === item.href || pathname.startsWith(item.href + '/')}
+                        />
+                    ))}
                 </div>
-
-                {/* Secondary Section Removed as per request */}
-
             </div>
 
             {/* User Profile */}
             <div className="p-4 border-t border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
-                <button className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-sidebar-accent transition-all duration-200 text-left border border-transparent hover:border-sidebar-border group">
+                <button className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-sidebar-accent transition-all duration-200 text-left border border-transparent hover:border-sidebar-border group outline-none">
                     <div className="relative">
                         <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm flex items-center justify-center">
                             <User className="w-6 h-6 text-slate-500" />

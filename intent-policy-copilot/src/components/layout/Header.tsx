@@ -84,7 +84,10 @@ export function Header() {
                                         </DropdownMenuItem>
                                     ))}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-muted-foreground">
+                                    <DropdownMenuItem
+                                        onClick={() => router.push('/workspaces')}
+                                        className="text-muted-foreground cursor-pointer"
+                                    >
                                         <span className="flex items-center justify-center w-5 h-5 border border-dashed border-slate-300 rounded mr-2">+</span>
                                         Create New Workspace
                                     </DropdownMenuItem>

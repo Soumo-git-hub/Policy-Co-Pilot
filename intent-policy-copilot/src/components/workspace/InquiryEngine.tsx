@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, User, Sparkles, StopCircle, Paperclip, Zap, ShieldCheck, Globe } from "lucide-react";
+import { Send, User, Sparkles, StopCircle, Paperclip, Zap, ShieldCheck, Globe, FileText, ChevronRight, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Citation } from "@/types";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -12,14 +12,12 @@ interface InquiryEngineProps {
 
 // Extensive Predefined Flows
 const flows: Record<string, any> = {
-    // FAME
     "fame": {
         q: "What are the incentive caps under FAME II?",
         a: "Under **FAME II Guidelines**, the demand incentive for electric buses is capped at **40% of the vehicle cost**. \n\nAdditionally, there is an absolute ceiling of ₹55 Lakhs per bus to ensure equitable distribution of funds.",
         cit: { id: "cit-fame", documentName: "FAME II Guidelines", page: 8 },
         suggestions: ["Compare with Vietnam's Policy", "Check Battery Swapping rules"]
     },
-    // Payment Security
     "payment": {
         q: "How does the Payment Security Mechanism work?",
         a: "The **Payment Security Mechanism (PSM)** utilizes a **revolving fund** structure.\n\nThis fund is capitalized to cover a **3-Month Fund** of receivables, providing a guaranteed liquidity buffer for operators against delayed payments from DISCOMs.",
@@ -38,7 +36,6 @@ const flows: Record<string, any> = {
         cit: { id: "cit-psm-risk", documentName: "CESL Tender", page: 16 },
         suggestions: ["How does this compare to Vietnam?", "Show Battery Specs"]
     },
-    // Battery
     "battery": {
         q: "Check Battery Swapping rules",
         a: "The **National Battery Swapping Policy** mandates that all battery packs must be **interoperable** and adhere to BIS standards.\n\nProviders are also required to share real-time State of Health (SOH) data with a central registry.",
@@ -57,64 +54,68 @@ const flows: Record<string, any> = {
         cit: { id: "cit-batt-fiscal", documentName: "Battery Policy", page: 22 },
         suggestions: ["Compare with Vietnam's Policy", "Back to Main Menu"]
     },
-    // Comparison
     "vietnam_compare": {
         q: "Compare with Vietnam's Policy",
         a: "Unlike India's FAME II, **Vietnam's policy** focuses more on **Tax Holidays** rather than direct purchase subsidies. \n\nVietnam offers a **0% Registration Fee** for EVs for the first 3 years, whereas India provides upfront capital subsidies.",
         cit: { id: "cit-vn-compare", documentName: "Vietnam EV Roadmap", page: 12 },
         suggestions: ["What about Indonesia?", "Back to Payment Security"]
     }
-}
+};
 
 export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
-    const { currentWorkspace } = useWorkspace();
+    const { currentWorkspace, userProfile } = useWorkspace();
     const [input, setInput] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isTyping, setIsTyping] = useState(false);
-
-    // Initial State: Empty with Suggestions
     const [messages, setMessages] = useState<any[]>([]);
 
     useEffect(() => {
+        const isIndia = currentWorkspace.id === 'in';
+        const isVN = currentWorkspace.id === 'vn';
+
         setMessages([
             {
                 role: "assistant",
-                content: `Hello ${currentWorkspace.id === 'in' ? 'Arjun' : 'Sarah'}. I am ready to assist with the **${currentWorkspace.name}** program.\n\nI have loaded 14 active frameworks and 3 draft amendments. Where would you like to start?`,
+                content: `Hello ${userProfile.firstName}. I am ready to assist with the **${currentWorkspace.name}** program.\n\nI have loaded the specific regional frameworks and latest draft amendments for ${currentWorkspace.name.split(' ')[0]}. Where would you like to start?`,
                 timestamp: "Just now",
-                suggestions: ["Analyze Payment Security", "FAME II Incentives Cap", "Check Battery Swapping rules"]
+                suggestions: isIndia
+                    ? ["Analyze Payment Security", "FAME II Incentives Cap", "Check Battery Swapping rules"]
+                    : isVN
+                        ? ["Review Registration Fee Exemption", "Analyze Charging Infra Subsidy", "Compare with India"]
+                        : ["Regional Framework Overview", "Incentive Structures", "Infrastructure Roadmap"]
             }
         ]);
-    }, [currentWorkspace.id]);
+    }, [currentWorkspace.id, userProfile.firstName]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
 
     useEffect(() => {
-        scrollToBottom();
+        // Only scroll to bottom if we have more than the initial greeting
+        if (messages.length > 1 || isTyping) {
+            scrollToBottom();
+        }
     }, [messages, isTyping]);
 
     const handleSuggestionClick = (suggestion: string) => {
-        // Advanced Fuzzy Matching Logic
         let flowKey = "";
         const s = suggestion.toLowerCase();
 
-        if (s.includes("fame")) flowKey = "fame";
-        else if (s.includes("battery") && !s.includes("specs")) flowKey = "battery";
-        else if (s.includes("payment")) flowKey = "payment";
-        else if (s.includes("state guarantee")) flowKey = "state_guarantee";
+        if (s.includes("fame") || s.includes("guidelines")) flowKey = "fame";
+        else if (s.includes("battery")) flowKey = "battery";
+        else if (s.includes("payment") || s.includes("incentive")) flowKey = "payment";
+        else if (s.includes("guarantee")) flowKey = "state_guarantee";
         else if (s.includes("risk")) flowKey = "risk";
-        else if (s.includes("technical") || s.includes("specs")) flowKey = "tech_standards";
-        else if (s.includes("fiscal")) flowKey = "fiscal";
-        else if (s.includes("vietnam")) flowKey = "vietnam_compare";
-        else flowKey = "payment"; // Default fallback if really lost
+        else if (s.includes("technical") || s.includes("charging")) flowKey = "tech_standards";
+        else if (s.includes("fiscal") || s.includes("registration")) flowKey = "fiscal";
+        else if (s.includes("vietnam") || s.includes("india") || s.includes("compare")) flowKey = "vietnam_compare";
+        else flowKey = "payment";
 
-        // 1. User Message
-        const userMsg = { role: "user", content: suggestion, timestamp: "Just now" }; // Use actual suggestion text
+        const userMsg = { role: "user", content: suggestion, timestamp: "Just now" };
         setMessages(prev => [...prev, userMsg]);
         setIsTyping(true);
 
-        // 2. AI Response
         setTimeout(() => {
             setIsTyping(false);
             const flow = flows[flowKey];
@@ -134,10 +135,9 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
 
         let flowKey = "payment";
         const i = input.toLowerCase();
-        // Simple keyword matching for typed input
         if (i.includes("risk")) flowKey = "risk";
         if (i.includes("battery")) flowKey = "battery";
-        if (i.includes("vietnam")) flowKey = "vietnam_compare";
+        if (i.includes("compare") || i.includes("global")) flowKey = "vietnam_compare";
 
         const userMsg = { role: "user", content: input, timestamp: "Just now" };
         setMessages(prev => [...prev, userMsg]);
@@ -146,221 +146,221 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
 
         setTimeout(() => {
             setIsTyping(false);
-            const flow = flows[flowKey];
-            // If we found a direct match, use it. If not, use generic.
-            if (i.includes("risk") || i.includes("battery") || i.includes("vietnam")) {
-                const aiMsg = {
-                    role: "assistant",
-                    content: flow.a,
-                    timestamp: "Just now",
-                    citations: [flow.cit],
-                    suggestions: flow.suggestions
-                };
-                setMessages(prev => [...prev, aiMsg]);
-            } else {
-                const aiMsg = {
-                    role: "assistant",
-                    content: "I've analyzed your query against the repository. Could you clarify if you are looking for **fiscal incentives** or **technical standards** regarding this topic?",
-                    timestamp: "Just now",
-                    suggestions: ["Fiscal Incentives", "Technical Standards"]
-                };
-                setMessages(prev => [...prev, aiMsg]);
-            }
-        }, 1500);
+            const flow = flows[flowKey] || flows["payment"];
+            const aiMsg = {
+                role: "assistant",
+                content: flow.a,
+                timestamp: "Just now",
+                citations: [flow.cit],
+                suggestions: flow.suggestions
+            };
+            setMessages(prev => [...prev, aiMsg]);
+        }, 1200);
     };
 
     return (
-        <div className="flex flex-col h-full relative bg-surface">
-            {/* Header */}
-            <div className="h-16 flex flex-col justify-center px-6 border-b border-border bg-surface/50 backdrop-blur-sm z-10 shrink-0">
-                <div className="flex items-center gap-2">
-                    <span className="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide border border-primary/20">Inquiry • {currentWorkspace.name}</span>
-                    <p className="text-muted-foreground text-xs font-mono">ID: #IN-8842-Alpha</p>
+        <div className="flex flex-col h-full relative bg-background">
+            {/* Premium Glass Header */}
+            <div className="h-20 flex items-center justify-between px-8 border-b border-border/50 bg-background/80 backdrop-blur-xl z-20 shrink-0 sticky top-0">
+                <div className="flex items-center gap-4">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 bg-primary/10")}>
+                        <span className="text-xl">{currentWorkspace.flag}</span>
+                    </div>
+                    <div>
+                        <h2 className="text-foreground text-sm font-bold leading-tight flex items-center gap-2">
+                            {currentWorkspace.name}
+                            <span className="px-1.5 py-0.5 bg-success/10 text-success text-[10px] rounded border border-success/20 tracking-tighter">ENCRYPTED</span>
+                        </h2>
+                        <p className="text-muted-foreground text-[11px] font-medium uppercase tracking-widest mt-0.5">Policy Copilot Engine</p>
+                    </div>
                 </div>
-                <h2 className="text-foreground text-lg font-bold leading-tight truncate pr-4 mt-0.5">Policy Copilot Engine</h2>
+                <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                {String.fromCharCode(64 + i)}
+                            </div>
+                        ))}
+                    </div>
+                    <span className="hidden sm:inline text-xs text-muted-foreground font-medium">12+ analysts active</span>
+                </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar scroll-smooth">
-                {messages.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className={cn(
-                            "flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300",
-                            msg.role === "user" ? "justify-end" : "justify-start"
-                        )}
-                    >
-                        <div className={cn("max-w-[85%] flex gap-4 text-sm", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-
-                            {/* Avatar */}
-                            <div
-                                className={cn(
-                                    "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm border",
-                                    msg.role === "user"
-                                        ? "bg-white border-border text-muted-foreground"
-                                        : "bg-primary text-white border-primary shadow-blue-500/20"
-                                )}
-                            >
-                                {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                            </div>
-
-                            {/* Message Content */}
-                            <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-foreground opacity-90">
-                                        {msg.role === "user" ? (currentWorkspace.id === 'in' ? "Arjun Mehta" : "Sarah Jenkins") : "AI Copilot"}
-                                    </span>
+            {/* Main Chat Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
+                <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+                    {messages.map((msg, idx) => (
+                        <div
+                            key={idx}
+                            className={cn(
+                                "flex w-full animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both",
+                                msg.role === "user" ? "justify-end" : "justify-start"
+                            )}
+                        >
+                            <div className={cn("max-w-[85%] flex gap-5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                                {/* Identity Indicator */}
+                                <div
+                                    className={cn(
+                                        "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-md border self-end mb-1",
+                                        msg.role === "user"
+                                            ? "bg-slate-900 border-slate-800 text-white dark:bg-slate-100 dark:text-slate-900"
+                                            : "bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-primary shadow-blue-500/5"
+                                    )}
+                                >
+                                    {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                                 </div>
 
-                                <div className={cn(
-                                    "rounded-2xl p-4 leading-relaxed shadow-sm border",
-                                    msg.role === "user"
-                                        ? "bg-slate-800 text-white border-slate-700 rounded-tr-sm"
-                                        : "bg-white text-slate-800 border-slate-100 rounded-tl-sm"
-                                )}>
-                                    <p>
-                                        {msg.content.split('\n').map((line: string, i: number) => (
-                                            <span key={i} className="block min-h-[1.2em] mb-1">
-                                                {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
-                                                    part.startsWith('**') && part.endsWith('**') ? (
-                                                        <strong key={j} className="font-bold text-blue-600 dark:text-blue-400">
-                                                            {part.slice(2, -2)}
-                                                        </strong>
-                                                    ) : (
-                                                        part
-                                                    )
-                                                )}
-                                            </span>
-                                        ))}
-                                    </p>
+                                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className="px-1 flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-tighter">
+                                            {msg.role === "user" ? `${userProfile.firstName} ${userProfile.lastName}` : `${currentWorkspace.id.toUpperCase()} POLICY BOT`}
+                                        </span>
+                                    </div>
+
+                                    <div className={cn(
+                                        "relative group px-6 py-4 rounded-3xl text-[14.5px] leading-[1.6] shadow-sm border transition-all",
+                                        msg.role === "user"
+                                            ? "bg-slate-900 text-white border-slate-800 rounded-tr-sm dark:bg-slate-100 dark:text-slate-900"
+                                            : "bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm text-slate-800 dark:text-slate-200 border-slate-100 dark:border-slate-800 rounded-tl-sm hover:border-primary/20"
+                                    )}>
+                                        <div className="whitespace-pre-wrap">
+                                            {msg.content.split('\n').map((line: string, i: number) => (
+                                                <p key={i} className="mb-2 last:mb-0">
+                                                    {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
+                                                        part.startsWith('**') && part.endsWith('**') ? (
+                                                            <strong key={j} className={cn("font-bold", msg.role === 'user' ? "text-blue-300 dark:text-blue-600" : "text-primary")}>
+                                                                {part.slice(2, -2)}
+                                                            </strong>
+                                                        ) : part
+                                                    )}
+                                                </p>
+                                            ))}
+                                        </div>
+
+                                        {msg.citations && (
+                                            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                                                {msg.citations.map((cit: Citation) => (
+                                                    <button
+                                                        key={cit.id}
+                                                        onClick={() => onCitationClick(cit)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 group/cit"
+                                                    >
+                                                        <FileText className="w-3.5 h-3.5 text-primary/60 group-hover/cit:scale-110 transition-transform" />
+                                                        Source: {cit.documentName} • p.{cit.page}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {msg.suggestions && (
+                                        <div className="flex flex-wrap gap-2 mt-2 px-1 animate-in fade-in slide-in-from-left-2 duration-700 delay-300">
+                                            {msg.suggestions.map((suggest: string) => (
+                                                <button
+                                                    key={suggest}
+                                                    onClick={() => handleSuggestionClick(suggest)}
+                                                    className="px-4 py-1.5 bg-white dark:bg-slate-900 border border-border/80 hover:border-primary hover:text-primary transition-all rounded-full text-[11px] font-bold text-muted-foreground shadow-sm active:scale-95"
+                                                >
+                                                    {suggest}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Citations (Only for Assistant) */}
-                                {msg.role === "assistant" && msg.citations && (
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        {msg.citations.map((cit: Citation) => (
-                                            <button
-                                                key={cit.id}
-                                                onClick={() => onCitationClick(cit)}
-                                                className="flex items-center gap-3 pl-2 pr-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-primary/40 hover:shadow-md hover:ring-2 hover:ring-primary/5 transition-all group text-left max-w-sm active:scale-95"
-                                            >
-                                                <div className="bg-red-50 p-1.5 rounded-lg border border-red-100 shrink-0">
-                                                    <span className="text-red-600 font-serif font-bold text-xs">PDF</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-semibold text-primary group-hover:underline decoration-primary/30 underline-offset-2">
-                                                        Source: {cit.documentName}, Pg {cit.page}
-                                                    </span>
-                                                    <span className="text-[10px] text-slate-400 leading-none mt-0.5">
-                                                        Click to verify evidence
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Suggestion Pills (Only for Assistant) */}
-                                {msg.role === "assistant" && msg.suggestions && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {msg.suggestions.map((sug: string, i: number) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => handleSuggestionClick(sug)}
-                                                className="text-xs bg-slate-100 hover:bg-white hover:text-blue-600 hover:border-blue-200 hover:shadow-sm text-slate-600 font-medium px-3 py-1.5 rounded-full border border-slate-300 transition-all cursor-pointer"
-                                            >
-                                                {sug}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
 
-                {isTyping && (
-                    <div className="flex w-full justify-start animate-in fade-in duration-300">
-                        <div className="max-w-[85%] flex gap-4">
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-primary text-white border border-primary shadow-sm">
-                                <Sparkles className="w-4 h-4 animate-spin-slow" />
+                    {isTyping && (
+                        <div className="flex gap-5 animate-in fade-in duration-300">
+                            <div className="w-9 h-9 rounded-2xl bg-primary shadow-lg shadow-primary/20 flex items-center justify-center border border-primary/20">
+                                <Sparkles className="w-4 h-4 text-white animate-pulse" />
                             </div>
-                            <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm p-4 shadow-sm flex items-center gap-2">
-                                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></span>
+                            <div className="flex flex-col gap-2">
+                                <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">Processing</span>
+                                <div className="px-5 py-3 bg-muted/20 border border-border/50 rounded-2xl rounded-tl-none flex gap-1.5 items-center">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:0.2s]" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:0.4s]" />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-                {/* Hero View for Empty State */}
-                {messages.length === 1 && !isTyping && (
-                    <div className="px-10 py-12 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                        <button
-                            onClick={() => handleSuggestionClick("Analyze FAME II Guidelines")}
-                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <Zap className="w-24 h-24 text-blue-600" />
-                            </div>
-                            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 border border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-300">
-                                <Zap className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
-                            </div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Analyze FAME II</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Deep dive into subsidy caps and eligibility criteria for electric buses.</p>
-                        </button>
+                    )}
 
-                        <button
-                            onClick={() => handleSuggestionClick("How does the Payment Security Mechanism work?")}
-                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <ShieldCheck className="w-24 h-24 text-emerald-600" />
-                            </div>
-                            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6 border border-emerald-100 dark:border-emerald-500/20 group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all duration-300">
-                                <ShieldCheck className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
-                            </div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Payment Security</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Review the CESL tender's revolving fund and risk mitigation guarantees.</p>
-                        </button>
-
-                        <button
-                            onClick={() => handleSuggestionClick("Compare with Vietnam's Policy")}
-                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                <Globe className="w-24 h-24 text-amber-600" />
-                            </div>
-                            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 border border-amber-100 dark:border-amber-500/20 group-hover:bg-amber-600 group-hover:border-amber-600 transition-all duration-300">
-                                <Globe className="w-6 h-6 text-amber-600 group-hover:text-white transition-colors" />
-                            </div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Global Comparison</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Benchmark India's incentives against Vietnam's tax holiday model.</p>
-                        </button>
-                    </div>
-                )}
-                <div ref={messagesEndRef} />
+                    {/* Empty State Hero */}
+                    {messages.length === 1 && !isTyping && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
+                            {[
+                                {
+                                    label: `Analyze ${currentWorkspace.name.split(' ')[0]}`,
+                                    icon: Zap,
+                                    color: "bg-blue-500",
+                                    desc: `Deep dive into local subsidy caps and regional benchmarks.`
+                                },
+                                {
+                                    label: "Incentive Support",
+                                    icon: ShieldCheck,
+                                    color: "bg-emerald-500",
+                                    desc: "Review regional tender's revolving fund and risk mitigation guarantees."
+                                },
+                                {
+                                    label: "Global Benchmarking",
+                                    icon: Globe,
+                                    color: "bg-amber-500",
+                                    desc: "Compare local policy against international EV roadmap standards."
+                                }
+                            ].map((card, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => handleSuggestionClick(card.label.includes('Analyze') ? `${card.label} Guidelines` : card.label)}
+                                    className="group p-6 bg-white dark:bg-slate-900 border border-border hover:border-primary/40 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 text-left relative overflow-hidden active:scale-95"
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <card.icon className="w-20 h-20 text-slate-400" />
+                                    </div>
+                                    <div className={cn(
+                                        "w-11 h-11 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300",
+                                        card.color + "/10 text-foreground group-hover:text-white group-hover:" + card.color
+                                    )}>
+                                        <card.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                                    </div>
+                                    <h3 className="font-bold text-foreground text-base mb-2 group-hover:text-primary transition-colors">{card.label}</h3>
+                                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">{card.desc}</p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div ref={messagesEndRef} className="h-4" />
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 bg-surface border-t border-border mt-auto">
-                <div className="relative flex items-center bg-white dark:bg-white rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-sm">
-                    <button className="p-3 text-muted-foreground hover:text-foreground transition-colors">
+            {/* Premium Floating Input Area */}
+            <div className="p-6 bg-background/50 backdrop-blur-sm border-t border-border/30">
+                <div className="max-w-4xl mx-auto flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-[2.5rem] border border-border focus-within:ring-4 focus-within:ring-primary/5 focus-within:border-primary transition-all shadow-lg group">
+                    <button className="p-4 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-90">
                         <Paperclip className="w-5 h-5" />
                     </button>
                     <input
-                        className="flex-1 bg-transparent border-none text-sm !text-slate-900 placeholder:text-slate-400 focus:ring-0 py-4"
-                        placeholder="Ask a follow-up question..."
+                        className="flex-1 bg-transparent border-none text-sm !text-slate-900 dark:!text-slate-100 placeholder:text-slate-400 focus:ring-0 py-4 font-medium px-2"
+                        placeholder="Analyze a policy or ask a follow-up..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     />
                     <button
                         onClick={handleSend}
-                        className="mr-2 p-2 bg-primary text-white rounded-xl hover:bg-blue-600 transition-colors shadow-sm disabled:opacity-50 disabled:shadow-none"
+                        className="p-4 bg-primary text-white rounded-full hover:bg-primary/90 transition-all shadow-md active:scale-90 disabled:opacity-50 duration-300"
                         disabled={!input.trim()}
                     >
-                        {isTyping ? <StopCircle className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                        {isTyping ? <StopCircle className="w-5 h-5 animate-pulse" /> : <Send className="w-5 h-5" />}
+                    </button>
+                </div>
+                <div className="flex justify-center items-center gap-4 mt-3">
+                    <p className="text-[10px] text-muted-foreground font-medium tracking-tight">AI can make mistakes. Verify critical policy decisions.</p>
+                    <div className="h-1 w-1 rounded-full bg-border" />
+                    <button className="flex items-center gap-1 text-[10px] text-primary font-bold hover:underline">
+                        <HelpCircle className="w-3 h-3" />
+                        Help Center
                     </button>
                 </div>
             </div>

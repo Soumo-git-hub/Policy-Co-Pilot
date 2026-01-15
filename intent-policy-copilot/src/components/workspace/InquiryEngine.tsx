@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, User, Sparkles, StopCircle, Paperclip } from "lucide-react";
+import { Send, User, Sparkles, StopCircle, Paperclip, Zap, ShieldCheck, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Citation } from "@/types";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -295,29 +295,47 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                 )}
                 {/* Hero View for Empty State */}
                 {messages.length === 1 && !isTyping && (
-                    <div className="px-10 py-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                        <button onClick={() => handleSuggestionClick("Analyze FAME II Guidelines")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 hover:ring-2 hover:ring-blue-500/10 transition-all text-left group">
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <span className="text-xl">⚡</span>
+                    <div className="px-10 py-12 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                        <button
+                            onClick={() => handleSuggestionClick("Analyze FAME II Guidelines")}
+                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <Zap className="w-24 h-24 text-blue-600" />
                             </div>
-                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-blue-700">Analyze FAME II</h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">Deep dive into subsidy caps and eligibility criteria for electric buses.</p>
+                            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 border border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-300">
+                                <Zap className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+                            </div>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Analyze FAME II</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Deep dive into subsidy caps and eligibility criteria for electric buses.</p>
                         </button>
 
-                        <button onClick={() => handleSuggestionClick("How does the Payment Security Mechanism work?")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-300 hover:ring-2 hover:ring-emerald-500/10 transition-all text-left group">
-                            <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <span className="text-xl">🛡️</span>
+                        <button
+                            onClick={() => handleSuggestionClick("How does the Payment Security Mechanism work?")}
+                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <ShieldCheck className="w-24 h-24 text-emerald-600" />
                             </div>
-                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-emerald-700">Payment Security</h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">Review the CESL tender's revolving fund and risk mitigation guarantees.</p>
+                            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6 border border-emerald-100 dark:border-emerald-500/20 group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all duration-300">
+                                <ShieldCheck className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+                            </div>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Payment Security</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Review the CESL tender's revolving fund and risk mitigation guarantees.</p>
                         </button>
 
-                        <button onClick={() => handleSuggestionClick("Compare with Vietnam's Policy")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-amber-300 hover:ring-2 hover:ring-amber-500/10 transition-all text-left group">
-                            <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <span className="text-xl">🌏</span>
+                        <button
+                            onClick={() => handleSuggestionClick("Compare with Vietnam's Policy")}
+                            className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left group overflow-hidden relative"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <Globe className="w-24 h-24 text-amber-600" />
                             </div>
-                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-amber-700">Global Comparison</h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">Benchmark India's incentives against Vietnam's tax holiday model.</p>
+                            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 border border-amber-100 dark:border-amber-500/20 group-hover:bg-amber-600 group-hover:border-amber-600 transition-all duration-300">
+                                <Globe className="w-6 h-6 text-amber-600 group-hover:text-white transition-colors" />
+                            </div>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Global Comparison</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Benchmark India's incentives against Vietnam's tax holiday model.</p>
                         </button>
                     </div>
                 )}
@@ -326,12 +344,12 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
 
             {/* Input Area */}
             <div className="p-4 bg-surface border-t border-border mt-auto">
-                <div className="relative flex items-center bg-white rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-sm">
+                <div className="relative flex items-center bg-white dark:bg-white rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-sm">
                     <button className="p-3 text-muted-foreground hover:text-foreground transition-colors">
                         <Paperclip className="w-5 h-5" />
                     </button>
                     <input
-                        className="flex-1 bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground focus:ring-0 py-4"
+                        className="flex-1 bg-transparent border-none text-sm !text-slate-900 placeholder:text-slate-400 focus:ring-0 py-4"
                         placeholder="Ask a follow-up question..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}

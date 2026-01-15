@@ -118,8 +118,8 @@ function Dropdown() {
             <DropdownMenuTrigger asChild>
                 <button className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-sidebar-accent transition-all duration-200 text-left border border-transparent hover:border-sidebar-border group outline-none">
                     <div className="relative">
-                        <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
-                            <img alt="Admin Avatar" className="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTI9lwTXH09fKzL4oN3zDljDVQp_0IidC4zhFi6cq6pW2MXD6qw_-gN52QGPKJd6zEMfZj7PgsSOPeewqroCouyHeqSpaEqT9KRAJeAFgr0nRkVSKFLfISg37vflb36784gS_7vhTc5Og1YZ-M26A8FO-5CDYutB7MAkg_7ZAezNASrQPtI95mmFyf3v0cjfR8IsB24SHUDhAA43Za-473QCcS8V38XXCZtihLRpRTpisW5s-P9BiB38i0qiORt5GEaG0DdcHN2h5G" />
+                        <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm flex items-center justify-center">
+                            <User className="w-6 h-6 text-slate-500" />
                         </div>
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-purple-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                     </div>
@@ -138,7 +138,7 @@ function Dropdown() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link href="/" className="cursor-pointer flex items-center gap-2">
+                    <Link href="/dashboard" className="cursor-pointer flex items-center gap-2">
                         <User className="w-4 h-4" />
                         <span>Switch to Analyst View</span>
                     </Link>

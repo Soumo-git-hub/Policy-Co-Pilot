@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Citation } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ZoomIn, ZoomOut, CheckCircle2, Printer, Search, FileText, Library, PanelRightClose } from "lucide-react";
+import { Download, ZoomIn, ZoomOut, CheckCircle2, Printer, Search, FileText, Library, PanelRightClose, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EvidenceVaultProps {
@@ -84,24 +84,55 @@ const documents: Record<string, any> = {
                 </div>
             </>
         )
+    },
+    "Vietnam EV Roadmap": {
+        title: "Vietnam_EV_Policy_Roadmap_2025.pdf",
+        fullTitle: "Socialist_Republic_Vietnam_EV_Transition_Roadmap.pdf",
+        pages: 56,
+        category: "Regional Benchmark",
+        content: (isActive: boolean) => (
+            <>
+                <h3 className="text-xl font-bold font-sans mb-4 text-slate-900">4.1 Registration Fee Exemption</h3>
+                <p className="text-[16px] text-justify text-slate-800 leading-8 mb-6">
+                    To accelerate the adoption of Battery Electric Vehicles (BEVs), the government has decreed a full exemption of the initial registration fee for a period of 3 years starting from March 2022.
+                </p>
+                <div className="relative pl-6 border-l-4 border-slate-200 my-6 group">
+                    <div className={cn("transition-all duration-500 rounded-sm p-1 -m-1", isActive ? "bg-yellow-200/50" : "bg-transparent")}>
+                        <p className="text-[16px] text-justify text-slate-900 font-medium leading-8">
+                            <span className={cn("transition-all duration-500", isActive ? "bg-yellow-300 text-slate-900 px-1 py-0.5 shadow-sm decoration-clone" : "")}>
+                                Comparison Note: This contrasts with the Indian model where upfront capital subsidies are preferred over operational tax holidays.
+                            </span>
+                            Future phases will introduce a 50% reduction in excise tax for locally assembled units.
+                        </p>
+                    </div>
+                </div>
+            </>
+        )
     }
 };
 
 export function EvidenceVault({ activeCitation, onClose }: EvidenceVaultProps) {
     const highlightRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [currentDocKey, setCurrentDocKey] = useState<string | null>(null); // Start null
+    const [currentDocKey, setCurrentDocKey] = useState<string | null>(null);
     const [zoom, setZoom] = useState(100);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Sync document view with active citation
     useEffect(() => {
         if (activeCitation) {
             const key = Object.keys(documents).find(k => activeCitation.documentName.includes(k));
             if (key) {
+                // Simulate network load
+                setIsLoading(true);
                 setCurrentDocKey(key);
+
                 setTimeout(() => {
-                    highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 300);
+                    setIsLoading(false);
+                    setTimeout(() => {
+                        highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }, 100);
+                }, 800);
             }
         }
     }, [activeCitation]);
@@ -157,12 +188,34 @@ export function EvidenceVault({ activeCitation, onClose }: EvidenceVaultProps) {
                         <Library className="w-4 h-4 text-slate-300" />
                     </div>
                     <div className="flex flex-col truncate">
-                        <span className="text-sm font-medium text-slate-100 truncate" title={activeDoc.fullTitle}>
-                            {activeDoc.title}
-                        </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wide font-bold">
-                            {activeDoc.category}
-                        </span>
+                        <AnimatePresence mode="wait">
+                            {isLoading ? (
+                                <motion.div
+                                    key="skeleton"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex flex-col gap-1 w-32"
+                                >
+                                    <div className="h-4 bg-slate-600 rounded animate-pulse w-full"></div>
+                                    <div className="h-2 bg-slate-700 rounded animate-pulse w-2/3"></div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="content"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="flex flex-col truncate"
+                                >
+                                    <span className="text-sm font-medium text-slate-100 truncate" title={activeDoc.fullTitle}>
+                                        {activeDoc.title}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wide font-bold">
+                                        {activeDoc.category}
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
@@ -190,40 +243,63 @@ export function EvidenceVault({ activeCitation, onClose }: EvidenceVaultProps) {
 
             {/* Viewer */}
             <div ref={containerRef} className="flex-1 overflow-auto p-4 md:p-8 flex justify-center bg-[#525659] relative custom-scrollbar-dark">
-                <div
-                    className="bg-white w-full max-w-[800px] min-h-[1100px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] px-8 md:px-16 py-20 relative transition-transform duration-300 ease-out origin-top border border-white/20"
-                    style={{ transform: `scale(${zoom / 100})` }}
-                >
-                    <div className="flex flex-col gap-6 font-serif text-black leading-relaxed">
-                        <div className="border-b-2 border-black pb-2 mb-8 flex justify-between items-end opacity-80">
-                            <span className="font-bold text-lg uppercase tracking-widest text-[#cf2e2e]">Confidential</span>
-                            <span className="text-xs font-sans text-slate-500">Page {activeCitation ? activeCitation.page : 12}</span>
+                {isLoading ? (
+                    /* Loading Skeleton */
+                    <div className="w-full max-w-[800px] aspect-[1/1.4] bg-white shadow-2xl px-16 py-20 relative animate-pulse opacity-90">
+                        <div className="h-8 bg-slate-200 w-1/3 mb-12 rounded"></div>
+                        <div className="space-y-4">
+                            <div className="h-4 bg-slate-200 w-full rounded"></div>
+                            <div className="h-4 bg-slate-200 w-full rounded"></div>
+                            <div className="h-4 bg-slate-200 w-5/6 rounded"></div>
+                            <div className="h-4 bg-slate-200 w-full rounded"></div>
                         </div>
-
-                        <div ref={highlightRef}>
-                            {activeDoc.content(!!activeCitation)}
+                        <div className="mt-12 pl-6 border-l-4 border-slate-200">
+                            <div className="h-20 bg-slate-100 rounded w-full"></div>
                         </div>
-
-                        <AnimatePresence>
-                            {activeCitation && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                                    exit={{ opacity: 0, x: 20, scale: 0.95 }}
-                                    className="absolute -right-32 top-64 mt-1 hidden xl:flex items-center gap-2 bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-xl z-20"
-                                >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                    AI Verified Source
-                                    <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-emerald-600 rotate-45"></div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div className="mt-auto pt-20 text-center text-[10px] text-slate-400 border-t border-slate-200 mt-10">
-                            {activeDoc.title} - version 2.1 - Internal Distribution Only
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-3">
+                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                                <span className="text-sm font-medium text-slate-400 tracking-wider uppercase">Retrieving Evidence...</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    /* Real Content */
+                    <div
+                        className="bg-white w-full max-w-[800px] min-h-[1100px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] px-8 md:px-16 py-20 relative transition-transform duration-300 ease-out origin-top border border-white/20"
+                        style={{ transform: `scale(${zoom / 100})` }}
+                    >
+                        <div className="flex flex-col gap-6 font-serif text-black leading-relaxed">
+                            <div className="border-b-2 border-black pb-2 mb-8 flex justify-between items-end opacity-80">
+                                <span className="font-bold text-lg uppercase tracking-widest text-[#cf2e2e]">Confidential</span>
+                                <span className="text-xs font-sans text-slate-500">Page {activeCitation ? activeCitation.page : 12}</span>
+                            </div>
+
+                            <div ref={highlightRef}>
+                                {activeDoc.content(!!activeCitation)}
+                            </div>
+
+                            <AnimatePresence>
+                                {activeCitation && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                                        exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                                        className="absolute -right-32 top-64 mt-1 hidden xl:flex items-center gap-2 bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-xl z-20"
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        AI Verified Source
+                                        <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-emerald-600 rotate-45"></div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <div className="mt-auto pt-20 text-center text-[10px] text-slate-400 border-t border-slate-200 mt-10">
+                                {activeDoc.title} - version 2.1 - Internal Distribution Only
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

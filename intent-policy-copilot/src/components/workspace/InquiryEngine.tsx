@@ -22,7 +22,7 @@ const flows: Record<string, any> = {
     // Payment Security
     "payment": {
         q: "How does the Payment Security Mechanism work?",
-        a: "The **Payment Security Mechanism (PSM)** utilizes a **revolving fund** structure.\n\nThis fund is capitalized to cover 3 months of receivables, providing a guaranteed liquidity buffer for operators against delayed payments from DISCOMs.",
+        a: "The **Payment Security Mechanism (PSM)** utilizes a **revolving fund** structure.\n\nThis fund is capitalized to cover a **3-Month Fund** of receivables, providing a guaranteed liquidity buffer for operators against delayed payments from DISCOMs.",
         cit: { id: "cit-psm", documentName: "CESL Tender", page: 12 },
         suggestions: ["Does it cover State Guarantees?", "Analyze Risk Factors"]
     },
@@ -61,7 +61,7 @@ const flows: Record<string, any> = {
     "vietnam_compare": {
         q: "Compare with Vietnam's Policy",
         a: "Unlike India's FAME II, **Vietnam's policy** focuses more on **Tax Holidays** rather than direct purchase subsidies. \n\nVietnam offers a **0% Registration Fee** for EVs for the first 3 years, whereas India provides upfront capital subsidies.",
-        cit: { id: "cit-vn-compare", documentName: "FAME II Guidelines", page: 4 }, // Linking to FAME for contrast or could be a VN doc
+        cit: { id: "cit-vn-compare", documentName: "Vietnam EV Roadmap", page: 12 },
         suggestions: ["What about Indonesia?", "Back to Payment Security"]
     }
 }
@@ -73,14 +73,18 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
     const [isTyping, setIsTyping] = useState(false);
 
     // Initial State: Empty with Suggestions
-    const [messages, setMessages] = useState<any[]>([
-        {
-            role: "assistant",
-            content: `Hello Director. I am ready to assist with the **${currentWorkspace.name}** program.\n\nI have loaded 14 active frameworks and 3 draft amendments. Where would you like to start?`,
-            timestamp: "Just now",
-            suggestions: ["Analyze Payment Security", "FAME II Incentives Cap", "Check Battery Swapping rules"]
-        }
-    ]);
+    const [messages, setMessages] = useState<any[]>([]);
+
+    useEffect(() => {
+        setMessages([
+            {
+                role: "assistant",
+                content: `Hello ${currentWorkspace.id === 'in' ? 'Arjun' : 'Sarah'}. I am ready to assist with the **${currentWorkspace.name}** program.\n\nI have loaded 14 active frameworks and 3 draft amendments. Where would you like to start?`,
+                timestamp: "Just now",
+                suggestions: ["Analyze Payment Security", "FAME II Incentives Cap", "Check Battery Swapping rules"]
+            }
+        ]);
+    }, [currentWorkspace.id]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -204,7 +208,7 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                             <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className="flex items-center gap-2">
                                     <span className="font-bold text-foreground opacity-90">
-                                        {msg.role === "user" ? "Director Nguyen" : "AI Copilot"}
+                                        {msg.role === "user" ? (currentWorkspace.id === 'in' ? "Arjun Mehta" : "Sarah Jenkins") : "AI Copilot"}
                                     </span>
                                 </div>
 
@@ -214,7 +218,21 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                                         ? "bg-slate-800 text-white border-slate-700 rounded-tr-sm"
                                         : "bg-white text-slate-800 border-slate-100 rounded-tl-sm"
                                 )}>
-                                    <p dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-blue-600 dark:text-blue-400">$1</strong>').replace(/\n/g, '<br/>') }} />
+                                    <p>
+                                        {msg.content.split('\n').map((line: string, i: number) => (
+                                            <span key={i} className="block min-h-[1.2em] mb-1">
+                                                {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
+                                                    part.startsWith('**') && part.endsWith('**') ? (
+                                                        <strong key={j} className="font-bold text-blue-600 dark:text-blue-400">
+                                                            {part.slice(2, -2)}
+                                                        </strong>
+                                                    ) : (
+                                                        part
+                                                    )
+                                                )}
+                                            </span>
+                                        ))}
+                                    </p>
                                 </div>
 
                                 {/* Citations (Only for Assistant) */}
@@ -249,7 +267,7 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                                             <button
                                                 key={i}
                                                 onClick={() => handleSuggestionClick(sug)}
-                                                className="text-xs bg-slate-100 hover:bg-white hover:text-blue-600 hover:border-blue-200 hover:shadow-sm text-slate-600 font-medium px-3 py-1.5 rounded-full border border-slate-200 transition-all cursor-pointer"
+                                                className="text-xs bg-slate-100 hover:bg-white hover:text-blue-600 hover:border-blue-200 hover:shadow-sm text-slate-600 font-medium px-3 py-1.5 rounded-full border border-slate-300 transition-all cursor-pointer"
                                             >
                                                 {sug}
                                             </button>
@@ -273,6 +291,34 @@ export function InquiryEngine({ onCitationClick }: InquiryEngineProps) {
                                 <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></span>
                             </div>
                         </div>
+                    </div>
+                )}
+                {/* Hero View for Empty State */}
+                {messages.length === 1 && !isTyping && (
+                    <div className="px-10 py-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                        <button onClick={() => handleSuggestionClick("Analyze FAME II Guidelines")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 hover:ring-2 hover:ring-blue-500/10 transition-all text-left group">
+                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <span className="text-xl">⚡</span>
+                            </div>
+                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-blue-700">Analyze FAME II</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">Deep dive into subsidy caps and eligibility criteria for electric buses.</p>
+                        </button>
+
+                        <button onClick={() => handleSuggestionClick("How does the Payment Security Mechanism work?")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-300 hover:ring-2 hover:ring-emerald-500/10 transition-all text-left group">
+                            <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <span className="text-xl">🛡️</span>
+                            </div>
+                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-emerald-700">Payment Security</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">Review the CESL tender's revolving fund and risk mitigation guarantees.</p>
+                        </button>
+
+                        <button onClick={() => handleSuggestionClick("Compare with Vietnam's Policy")} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-amber-300 hover:ring-2 hover:ring-amber-500/10 transition-all text-left group">
+                            <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <span className="text-xl">🌏</span>
+                            </div>
+                            <h3 className="font-bold text-slate-800 mb-1 group-hover:text-amber-700">Global Comparison</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">Benchmark India's incentives against Vietnam's tax holiday model.</p>
+                        </button>
                     </div>
                 )}
                 <div ref={messagesEndRef} />

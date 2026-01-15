@@ -68,8 +68,8 @@ export default function AdminSecurityPage() {
 
 
     const logs = [
-        { id: 1, event: "Login Attempt", user: "Director Nguyen", loc: "192.168.1.1 (VN)", time: "Jan 15, 10:42 AM", status: "Success", details: "Authorized via biometrics." },
-        { id: 2, event: "Document Export", user: "Director Nguyen", loc: "192.168.1.1 (VN)", time: "Jan 15, 10:15 AM", status: "Success", details: "Exported 'CESL_Framework_v2.pdf'." },
+        { id: 1, event: "Login Attempt", user: "Director", loc: "192.168.1.1 (VN)", time: "Jan 15, 10:42 AM", status: "Success", details: "Authorized via biometrics." },
+        { id: 2, event: "Document Export", user: "Director", loc: "192.168.1.1 (VN)", time: "Jan 15, 10:15 AM", status: "Success", details: "Exported 'CESL_Framework_v2.pdf'." },
         { id: 3, event: "API Key Rotation", user: "System Admin", loc: "Internal", time: "Jan 14, 02:00 AM", status: "Success", details: "Routine automated rotation." },
         { id: 4, event: "Failed Login", user: "Unknown", loc: "45.2.1.1 (CN)", time: "Jan 13, 11:20 PM", status: "Blocked", details: "Multiple failed attempts. IP temporarily banned." },
         { id: 5, event: "Policy Access", user: "Sarah Jenkins", loc: "192.168.1.5 (VN)", time: "Jan 13, 09:30 AM", status: "Success", details: "Viewed restricted document #442." },
@@ -127,11 +127,13 @@ export default function AdminSecurityPage() {
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Security & Compliance Center</h2>
                         <p className="text-slate-500 dark:text-slate-400 mt-2">Centralized command for access control, threat monitoring, and audit trails.</p>
                     </div>
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={handleRunAudit}
                         disabled={isScanning}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-3 rounded-xl shadow-lg transition-all text-sm font-bold tracking-wide active:scale-95 border border-white/10 relative overflow-hidden group",
+                            "flex items-center gap-2 px-6 py-3 rounded-xl shadow-lg transition-all text-sm font-bold tracking-wide border border-white/10 relative overflow-hidden group",
                             isScanning ? "bg-slate-800 text-slate-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white hover:shadow-purple-500/25"
                         )}
                     >
@@ -147,7 +149,7 @@ export default function AdminSecurityPage() {
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
                             </>
                         )}
-                    </button>
+                    </motion.button>
                 </div>
 
                 {/* Metrics Grid */}

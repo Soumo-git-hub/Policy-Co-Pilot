@@ -1,9 +1,10 @@
 "use client";
 
 import { User, Bell, Shield, Key, Moon, Sun, Monitor, Laptop, Smartphone, Mail, Globe, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast-system";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -20,9 +21,25 @@ export default function SettingsPage() {
     const { setTheme, theme } = useTheme();
     const [isSaving, setIsSaving] = useState(false);
 
+    // Context State
+    const { userProfile, updateUserProfile } = useWorkspace();
+    const [formData, setFormData] = useState(userProfile);
+
+    // Sync local state when context profile changes (e.g. workspace switch)
+    useEffect(() => {
+        setFormData(userProfile);
+    }, [userProfile]);
+
+    const handleChange = (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
     const handleSave = () => {
         setIsSaving(true);
-        // Simulate API call
+
+        // Save to Context & LocalStorage
+        updateUserProfile(formData);
+
         setTimeout(() => {
             setIsSaving(false);
             addToast({
@@ -74,7 +91,7 @@ export default function SettingsPage() {
                                 className="space-y-6"
                             >
                                 {/* Content Switcher */}
-                                {activeTab === "profile" && <ProfileSection />}
+                                {activeTab === "profile" && <ProfileSection formData={formData} onChange={handleChange} />}
                                 {activeTab === "notifications" && <NotificationsSection />}
                                 {activeTab === "appearance" && <AppearanceSection theme={theme || 'system'} setTheme={setTheme} />}
                                 {activeTab === "security" && <SecuritySection />}
@@ -125,7 +142,7 @@ function SectionHeader({ title, description }: { title: string; description: str
     );
 }
 
-function ProfileSection() {
+function ProfileSection({ formData, onChange }: { formData: any, onChange: (f: string, v: string) => void }) {
     return (
         <div>
             <SectionHeader title="Profile Information" description="Update your personal information and public profile." />
@@ -134,11 +151,9 @@ function ProfileSection() {
                 {/* Avatar */}
                 <div className="flex items-center gap-6">
                     <div className="relative">
-                        <img
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk2OaJnntFtiFGKm17cFEWN8zUyXgZ11XMhRQgIx5pyTiPbdaNNcsSahYLldXExIxjaeEeSsuaZiaBrRzudFna5W2ZsDTRWCi6meMNysfzrdMkeKtek5jjRRWS52a_Tg68ns8i1jEM5-JFqbOCTHcn2XJvwphMqxZdr548AO6Lglx90RbUUEgBkVZCAgWqnlr6L_rVZOO3oApBO89k8xcjcX8_gs4kvu5RyFJElAzZYHMsWOzAIiiKYshcgGU5swuWnA8Q0wwhZ0Ez"
-                            alt="Profile"
-                            className="w-20 h-20 rounded-full object-cover border-4 border-slate-50 dark:border-slate-800"
-                        />
+                        <div className="w-20 h-20 rounded-full bg-slate-200 overflow-hidden border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center">
+                            <User className="w-10 h-10 text-slate-500" />
+                        </div>
                         <button className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full shadow-lg border-2 border-white dark:border-slate-800 hover:bg-blue-700 transition-colors">
                             <User className="w-3 h-3" />
                         </button>
@@ -156,22 +171,42 @@ function ProfileSection() {
                 <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
-                        <input type="text" defaultValue="Director" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all" />
+                        <input
+                            type="text"
+                            value={formData.firstName || ''}
+                            onChange={(e) => onChange('firstName', e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all"
+                        />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
-                        <input type="text" defaultValue="Nguyen" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all" />
+                        <input
+                            type="text"
+                            value={formData.lastName || ''}
+                            onChange={(e) => onChange('lastName', e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all"
+                        />
                     </div>
                     <div className="space-y-2 col-span-2">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input type="email" defaultValue="d.nguyen@intent.gov.vn" className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all" />
+                            <input
+                                type="email"
+                                value={formData.email || ''}
+                                onChange={(e) => onChange('email', e.target.value)}
+                                className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all"
+                            />
                         </div>
                     </div>
                     <div className="space-y-2 col-span-2">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Bio</label>
-                        <textarea rows={3} defaultValue="Senior Policy Director for INTENT, specializing in sustainable transport and energy frameworks." className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all resize-none" />
+                        <textarea
+                            rows={3}
+                            value={formData.bio || ''}
+                            onChange={(e) => onChange('bio', e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-sm outline-none transition-all resize-none"
+                        />
                     </div>
                 </div>
             </div>

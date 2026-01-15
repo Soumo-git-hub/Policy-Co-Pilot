@@ -39,6 +39,11 @@ export function Header() {
 
     const getBreadcrumb = () => {
         if (pathname === '/dashboard') return 'Governance Dashboard';
+        if (pathname === '/admin/security') return 'Security & Compliance';
+        if (pathname === '/admin/users') return 'Identity Management';
+        if (pathname === '/admin/api') return 'API Configuration';
+        if (pathname === '/admin/workspaces') return 'User Workspaces';
+        if (pathname === '/admin/health') return 'System Health';
         if (pathname.startsWith('/admin')) return 'System Administration';
         const segment = pathname.split('/')[1];
         return segment ? segment.charAt(0).toUpperCase() + segment.slice(1) : 'Dashboard';
@@ -181,48 +186,13 @@ export function Header() {
                     </PopoverContent>
                 </Popover>
 
-                {/* Functional Settings Dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none focus:bg-muted">
-                            <Settings className="w-5 h-5" />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <User className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            <span>Email Preferences</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => setTheme("light")}>
-                            <Sun className="mr-2 h-4 w-4" />
-                            <span>Light Mode</span>
-                            {theme === 'light' && <Check className="ml-auto w-4 h-4" />}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("dark")}>
-                            <Moon className="mr-2 h-4 w-4" />
-                            <span>Dark Mode</span>
-                            {theme === 'dark' && <Check className="ml-auto w-4 h-4" />}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("system")}>
-                            <Monitor className="mr-2 h-4 w-4" />
-                            <span>System</span>
-                            {theme === 'system' && <Check className="ml-auto w-4 h-4" />}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push('/')} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Log out</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Direct Settings Link */}
+                <button
+                    onClick={() => router.push('/settings')}
+                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none focus:bg-muted"
+                >
+                    <Settings className="w-5 h-5" />
+                </button>
 
             </div>
         </header>
